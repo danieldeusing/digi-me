@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+.superpowers/
+.dev.vars*
+
+# written by Claude Code each time it loads the plugin
+.claude-plugin/types/
+tsconfig.json

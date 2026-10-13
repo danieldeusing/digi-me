@@ -1,0 +1,27 @@
+name = "digi-me-relay"
+main = "src/worker.mjs"
+compatibility_date = "2026-09-01"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "digi-me-relay"
+
+# One budget per client address: 60 requests a minute. A session start pulls two bundles.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "7301"
+simple = { limit = 60, period = 60 }
+
+# Daniel's deployment. A fork adds its own [env.<name>] block.
+[env.danieldeusing]
+routes = [{ pattern = "digi.danieldeusing.de", custom_domain = true }]
+workers_dev = false
+
+[[env.danieldeusing.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "digi-me-relay-danieldeusing"
+
+[[env.danieldeusing.ratelimits]]
+name = "LIMITER"
+namespace_id = "7301"
+simple = { limit = 60, period = 60 }

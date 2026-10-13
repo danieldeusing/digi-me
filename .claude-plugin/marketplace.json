@@ -1,0 +1,15 @@
+{
+  "name": "digi-me",
+  "owner": { "name": "Daniel Deusing" },
+  "metadata": {
+    "description": "digi-me, your digital me for coding agents and chats"
+  },
+  "plugins": [
+    {
+      "name": "digi-me",
+      "source": "./",
+      "description": "Your digital me: your core facts in every Claude Code session, and an interview deck for capi",
+      "author": { "name": "Daniel Deusing" }
+    }
+  ]
+}
