@@ -197,7 +197,7 @@ export function parseFeedback(text) {
 export function createInterview({ data, options, root }) {
   const language = () => options().language ?? 'de'
   return {
-    available: async () => Boolean(data()?.interview),
+    available: async () => Array.isArray(data()?.interview?.domains),
     describe: async () => ({
       id: 'interview',
       label: 'digi-me',

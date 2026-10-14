@@ -134,6 +134,8 @@ test('the noun is available when the my-agents bundle has an interview part, and
   assert.equal(await noun.available(), true)
   data = { ...DATA, interview: undefined }
   assert.equal(await noun.available(), false)
+  data = { ...DATA, interview: {} }
+  assert.equal(await noun.available(), false)
   data = null
   assert.equal(await noun.available(), false)
   assert.equal((await noun.describe()).texts.unavailable, 'Noch keine Fragen: digi-me ist hier noch nicht eingerichtet.')

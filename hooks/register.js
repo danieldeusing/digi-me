@@ -27,7 +27,6 @@ export function register(on, opts) {
   on('session.start', async ($, e, next) => {
     root = $.plugin.root
     home = (await $.env.get('DIGI_ME_HOME')) || (await $.env.get('HOME')) || ''
-    await chooseNow($)
     await load($)
     // Not awaited: the relay may be slow or offline; the cached bundles serve meanwhile.
     void refresh($)
