@@ -514,8 +514,10 @@ corrects them through `confirm` cards.
   - `describe()` → `{ id, label, icon, perDay, language, texts }`;
   - `status()` → header pairs, for example `[['Abdeckung', '12 %']]`;
   - `request(ctx)` → `{ system, prompt, call }`; `parse(text)` → cards;
-  - `answered(card, entry, ctx)` → `{ line, request? }`; `parseFeedback(text)` →
+  - `answered({ card, entry, ctx })` → `{ line, request? }`; `parseFeedback(text)` →
     `{ line, patch: { corrected, meaning } }`;
+  - a call into another mod's noun takes exactly one input (the engine's host check), so a
+    method with several inputs takes one object;
   - `recordArgv()` → the command capi runs with the answer entries as JSON lines on stdin.
 - **Answer cards** carry `format`, `question`, `options` (empty for `free`; `1`–`5` for
   `scale`, with `scaleLabels`), `other` (the last choice option opens the text field),

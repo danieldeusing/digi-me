@@ -219,7 +219,7 @@ export function createInterview({ data, options, root, personal }) {
     parse: async (text) => parseCards(text, (data()?.interview?.domains ?? []).map((d) => d.id)),
     // Outside a personal session no feedback call runs: it would send the answer through that
     // session's model account.
-    answered: async (card, entry, ctx) => answeredResult(card, entry, personal() ? ctx : { ...ctx, learn: false }, language()),
+    answered: async ({ card, entry, ctx }) => answeredResult(card, entry, personal() ? ctx : { ...ctx, learn: false }, language()),
     parseFeedback: async (text) => parseFeedback(text),
     recordArgv: async () => {
       if (!root()) throw new Error('digi-me is not started yet')

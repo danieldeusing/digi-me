@@ -141,7 +141,13 @@ test('the noun is available in personal sessions only, and says so in its own wo
 
 test('outside a personal session a typed answer asks for no feedback', async () => {
   const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin', personal: () => false })
-  const r = await noun.answered({ question: 'Você gosta de café?' }, { text: 'eu gosta', skipped: false }, { ...CTX, learn: true })
+  const r = await noun.answered({ card: { question: 'Você gosta de café?' }, entry: { text: 'eu gosta', skipped: false }, ctx: { ...CTX, learn: true } })
+  assert.deepEqual(r, { line: 'Danke, notiert.' })
+})
+
+test('answered takes one object, as a call from another mod brings it', async () => {
+  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin', personal: () => true })
+  const r = await noun.answered({ card: { question: 'Kaffee oder Tee?' }, entry: { answer: 0, text: null, skipped: false }, ctx: CTX })
   assert.deepEqual(r, { line: 'Danke, notiert.' })
 })
 
