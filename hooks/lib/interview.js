@@ -33,20 +33,24 @@ const TEXTS = {
   de: {
     wait: 'Suche Fragen über dich … ☕', empty: 'Gerade keine Fragen. Gleich kommen neue.', fail: 'Etwas ist schiefgegangen',
     doneToday: 'Für heute genug gefragt. Bis morgen!', skip: 'überspringen', stop: 'nicht mehr fragen', next: 'weiter',
-    placeholder: 'deine Antwort …', send: 'senden', thanks: 'Danke, notiert.', coverage: 'Abdeckung',
+    placeholder: 'deine Antwort …', send: 'senden', thanks: 'Danke, notiert.', coverage: 'Abdeckung', domain: 'Bereich', topic: 'Thema',
     unavailable: 'Noch keine Fragen: digi-me ist hier noch nicht eingerichtet.',
     sees: 'Sichtbar für', suggested: 'Vorschlag', seenBy: 'Das sehen', notSeenBy: 'Nicht', onlyYou: 'Das siehst nur du.', othersNot: 'alle anderen', onlyMe: 'nur ich',
   },
   en: {
     wait: 'Finding questions about you … ☕', empty: 'No questions right now. More soon.', fail: 'Something went wrong',
     doneToday: 'Enough questions for today. See you tomorrow!', skip: 'skip', stop: "don't ask again", next: 'next',
-    placeholder: 'your answer …', send: 'send', thanks: 'Thanks, noted.', coverage: 'coverage',
+    placeholder: 'your answer …', send: 'send', thanks: 'Thanks, noted.', coverage: 'coverage', domain: 'area', topic: 'topic',
     unavailable: 'No questions yet: digi-me is not set up here.',
     sees: 'Visible to', suggested: 'suggestion', seenBy: 'Seen by', notSeenBy: 'Not', onlyYou: 'Only you see this.', othersNot: 'everyone else', onlyMe: 'only me',
   },
 }
 const textsFor = (language) => TEXTS[language] ?? TEXTS.en
 const isText = (v) => typeof v === 'string' && v.trim() !== ''
+// A last option the model wrote as "something else" without "other": true still lets the owner type.
+// Only the whole option counts, so "Andere Leute" stays a normal choice; an icon in front, dots and a
+// note in brackets after it ("Other (please say)") are allowed.
+const SOMETHING_ELSE = /^[^\p{L}]*(etwas anderes|anderes|andere|sonstiges|sonstige|something else|others?|outra coisa|outr[oa]s?)\s*[.…]*\s*(\(.*\))?\s*$/iu
 
 export function systemPrompt(ctx, language) {
   const languageRule = ctx.learn
@@ -66,7 +70,7 @@ export function systemPrompt(ctx, language) {
     '',
     'Formats:',
     '- either: exactly 2 options.',
-    '- choice: 3 or 4 options. When the last option means "something else, let me type it", add "other": true.',
+    '- choice: 3 or 4 options. When the last option means "something else", add "other": true: the owner then types the answer.',
     '- scale: no options; "scaleLabels": [the low end, the high end] of a 1 to 5 scale.',
     '- confirm: checks a fact from "Facts to re-check" ("I think you … Right?"); exactly 3 options: yes, partly, no; "sees": the circles the fact shows under "Facts to re-check".',
     '- free: no options; the owner types a short answer.',
@@ -138,7 +142,7 @@ function normalize(c, domainIds) {
   if (isText(c.note)) base.note = c.note.trim()
   const options = Array.isArray(c.options) && c.options.every(isText) ? c.options.map((o) => o.trim()) : null
   if (c.format === 'either') return options?.length === 2 ? { ...base, options } : null
-  if (c.format === 'choice') return options && options.length >= 3 && options.length <= 4 ? { ...base, options, other: c.other === true } : null
+  if (c.format === 'choice') return options && options.length >= 3 && options.length <= 4 ? { ...base, options, other: c.other === true || SOMETHING_ELSE.test(options.at(-1)) } : null
   if (c.format === 'confirm') return options?.length === 3 ? { ...base, options } : null
   if (c.format === 'scale') {
     const labels = Array.isArray(c.scaleLabels) && c.scaleLabels.length === 2 && c.scaleLabels.every(isText) ? c.scaleLabels.map((t) => t.trim()) : null

@@ -212,3 +212,18 @@ test('the card circles are the CLI circles, in both languages', async () => {
     assert.deepEqual(info.circles.map((c) => c.id), CIRCLES)
   }
 })
+
+test('a choice whose last option means "something else" lets the owner type, also without the flag', () => {
+  const card = (last) => ({ format: 'choice', domain: 'media', topic: 'background', question: 'Was läuft nebenbei?', options: ['Musik', 'Podcasts', last], sees: ['familie'] })
+  const lasts = ['Etwas anderes', 'Anderes …', 'Andere', 'Sonstiges', 'Sonstige', 'Something else', 'Other', 'Others', 'Other (please say)', 'Outra coisa', 'Outro', 'Outros', 'Outras', '✏️ Etwas anderes']
+  assert.deepEqual(parseCards(JSON.stringify(lasts.map(card)), ['media']).map((c) => c.other), lasts.map(() => true))
+  // a normal option that only starts with such a word stays a choice
+  const normal = ['Serien', 'Andere Leute', 'Other people', 'Outra cidade', 'Outro lugar']
+  assert.deepEqual(parseCards(JSON.stringify(normal.map(card)), ['media']).map((c) => c.other), normal.map(() => false))
+})
+
+test('describe names the words for the card header', async () => {
+  const de = await createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin' }).describe()
+  const en = await createInterview({ data: () => DATA, options: () => ({ language: 'en' }), root: () => '/plugin' }).describe()
+  assert.deepEqual([de.texts.domain, de.texts.topic, en.texts.domain, en.texts.topic], ['Bereich', 'Thema', 'area', 'topic'])
+})
