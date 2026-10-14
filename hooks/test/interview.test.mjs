@@ -226,4 +226,5 @@ test('describe names the words for the card header', async () => {
   const de = await createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin' }).describe()
   const en = await createInterview({ data: () => DATA, options: () => ({ language: 'en' }), root: () => '/plugin' }).describe()
   assert.deepEqual([de.texts.domain, de.texts.topic, en.texts.domain, en.texts.topic], ['Bereich', 'Thema', 'area', 'topic'])
+  assert.deepEqual([de.texts.own, en.texts.own], ['Eigene Antwort', 'Own answer'])
 })
