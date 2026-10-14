@@ -42,7 +42,7 @@ Domains and their default circles are in `domains.md`.
    - a contradiction: add `⚠ conflicts with a-…` to the fact text; never overwrite silently;
    - a skipped answer: nothing; a "don't ask again" answer: nothing (the stop is in the log).
    - An answer `id` seen before (in an earlier file or line) is the same answer: count it once.
-   - `answer` is the index of the chosen option for every format; for a `scale` card the value is `options[answer]` (1 to 5). (`free` answers, and the "other" option of `either`/`choice`, have their words in `text`.)
+   - `answer` is the index of the chosen option for every format; for a `scale` card the value is `options[answer]` (1 to 5). (`free` answers, and the "other" option of `either`/`choice`, have their words in `text`.) An own answer on an `either`, `choice` or `confirm` card has `answer: null` and its words in `text`: read the text as the answer; on a `confirm` card it is a correction of the fact.
    - In learn mode use the entry's `meaning`, not the typed text.
    - An entry without `sees`: use `[]` and ask the user.
 4. Only propose `core: true` or wider circles for the user to accept, and name the circles in plain words (for example "sichtbar für Familie und Beste Freunde").
