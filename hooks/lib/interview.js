@@ -34,14 +34,14 @@ const TEXTS = {
     wait: 'Suche Fragen über dich … ☕', empty: 'Gerade keine Fragen. Gleich kommen neue.', fail: 'Etwas ist schiefgegangen',
     doneToday: 'Für heute genug gefragt. Bis morgen!', skip: 'überspringen', stop: 'nicht mehr fragen', next: 'weiter',
     placeholder: 'deine Antwort …', send: 'senden', thanks: 'Danke, notiert.', coverage: 'Abdeckung',
-    unavailable: 'Das Interview läuft nur in persönlichen Sessions.',
+    unavailable: 'Noch keine Fragen: digi-me ist hier noch nicht eingerichtet.',
     sees: 'Sichtbar für', suggested: 'Vorschlag', seenBy: 'Das sehen', notSeenBy: 'Nicht', onlyYou: 'Das siehst nur du.', othersNot: 'alle anderen', onlyMe: 'nur ich',
   },
   en: {
     wait: 'Finding questions about you … ☕', empty: 'No questions right now. More soon.', fail: 'Something went wrong',
     doneToday: 'Enough questions for today. See you tomorrow!', skip: 'skip', stop: "don't ask again", next: 'next',
     placeholder: 'your answer …', send: 'send', thanks: 'Thanks, noted.', coverage: 'coverage',
-    unavailable: 'The interview runs in personal sessions only.',
+    unavailable: 'No questions yet: digi-me is not set up here.',
     sees: 'Visible to', suggested: 'suggestion', seenBy: 'Seen by', notSeenBy: 'Not', onlyYou: 'Only you see this.', othersNot: 'everyone else', onlyMe: 'only me',
   },
 }
@@ -193,11 +193,11 @@ export function parseFeedback(text) {
 }
 
 // The `digiMe` noun: methods only (a data field would unload the plugin, spike 1).
-// personal(): whether the current session's audience is my-agents; the interview runs only there.
-export function createInterview({ data, options, root, personal }) {
+// data(): the pulled my-agents bundle, or null; the interview runs in every session.
+export function createInterview({ data, options, root }) {
   const language = () => options().language ?? 'de'
   return {
-    available: async () => personal(),
+    available: async () => Boolean(data()?.interview),
     describe: async () => ({
       id: 'interview',
       label: 'digi-me',
@@ -208,18 +208,15 @@ export function createInterview({ data, options, root, personal }) {
       circles: CIRCLES[language()] ?? CIRCLES.en,
     }),
     status: async () => {
-      const iv = personal() ? data()?.interview : null
+      const iv = data()?.interview
       if (!iv) return []
       return [[textsFor(language()).coverage, `${Math.round(coverage(iv.domains, iv.counts ?? {}) * 100)} %`]]
     },
     request: async (ctx) => {
-      if (!personal()) throw new Error('the digi-me interview runs in personal sessions only')
       return buildRequest(data(), ctx, language())
     },
     parse: async (text) => parseCards(text, (data()?.interview?.domains ?? []).map((d) => d.id)),
-    // Outside a personal session no feedback call runs: it would send the answer through that
-    // session's model account.
-    answered: async ({ card, entry, ctx }) => answeredResult(card, entry, personal() ? ctx : { ...ctx, learn: false }, language()),
+    answered: async ({ card, entry, ctx }) => answeredResult(card, entry, ctx, language()),
     parseFeedback: async (text) => parseFeedback(text),
     recordArgv: async () => {
       if (!root()) throw new Error('digi-me is not started yet')

@@ -73,8 +73,8 @@ The admin token is needed once, for `init`. The CLI never stores it.
   `arbeitsfreunde`, `arbeit`, `firmen`, `alle`. An audience gets the facts of its circle or `alle`.
   `my-agents` (`circle: any`) gets every fact except those with no circle.
 - A fact with `sees: []` never leaves the data repo.
-- Sessions in work folders get the `work-agents` bundle only. The interview runs in personal
-  sessions only.
+- Sessions in work folders get the `work-agents` bundle only in the system prompt. The interview
+  runs in every session and always uses the `my-agents` facts.
 - Removing a device revokes its token at once and publishes new bundles without it; it keeps
   what it already downloaded.
 

@@ -14,16 +14,13 @@ const AUDIENCES = ['my-agents', 'work-agents']
 let options = {}
 let root = ''
 let home = ''
-// The audience last computed (session.start, then every prompt); work-agents until the first.
-let audience = 'work-agents'
 let bundles = {}
 
 const folderOf = (a) => `${home}/.digi-me/bundles/${a}`
 
 export function register(on, opts) {
   options = opts ?? {}
-  const personal = () => audience === 'my-agents'
-  const interview = createInterview({ data: () => (personal() ? bundles['my-agents'] ?? null : null), options: () => options, root: () => root, personal })
+  const interview = createInterview({ data: () => bundles['my-agents'] ?? null, options: () => options, root: () => root })
 
   on('engine.create', async ($, e, next) => ({ ...(await next(e)), digiMe: interview }))
 
@@ -50,8 +47,7 @@ export function register(on, opts) {
 // Work-agents when the session's folder or its project root lies in a work folder (fails closed).
 async function chooseNow($) {
   const dirs = [await $.session.cwd(), await $.session.root()]
-  audience = dirs.some((d) => chooseAudience(d, options.workPaths, home) === 'work-agents') ? 'work-agents' : 'my-agents'
-  return audience
+  return dirs.some((d) => chooseAudience(d, options.workPaths, home) === 'work-agents') ? 'work-agents' : 'my-agents'
 }
 
 async function load($) {

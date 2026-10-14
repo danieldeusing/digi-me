@@ -96,7 +96,7 @@ test('parseFeedback reads the correction, or returns null', () => {
 })
 
 test('the noun has methods only and describes itself', async () => {
-  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de', perDay: 7.6 }), root: () => '/plugin', personal: () => true })
+  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de', perDay: 7.6 }), root: () => '/plugin' })
   assert.ok(Object.values(noun).every((v) => typeof v === 'function'))
   const info = await noun.describe()
   assert.deepEqual([info.id, info.label, info.perDay, info.language, info.texts.skip], ['interview', 'digi-me', 7, 'de', 'überspringen'])
@@ -105,14 +105,14 @@ test('the noun has methods only and describes itself', async () => {
   assert.equal((await noun.parse(JSON.stringify([{ format: 'free', domain: 'food', topic: 't', question: 'Q?', sees: ['familie', 'beste-freunde', 'freunde', 'arbeitsfreunde'] }]))).length, 1)
 })
 
-test('in a work session the interview asks nothing and shows no coverage', async () => {
-  const noun = createInterview({ data: () => DATA, options: () => ({}), root: () => '/plugin', personal: () => false })
-  await assert.rejects(noun.request(CTX), { message: 'the digi-me interview runs in personal sessions only' })
-  assert.deepEqual(await noun.status(), [])
+test('in a work session the interview asks and shows coverage all the same', async () => {
+  const noun = createInterview({ data: () => DATA, options: () => ({}), root: () => '/plugin' })
+  assert.match((await noun.request(CTX)).prompt, /Write 10 cards\./)
+  assert.deepEqual(await noun.status(), [['Abdeckung', '6 %']])
 })
 
 test('an answer cannot be recorded before the session started', async () => {
-  const noun = createInterview({ data: () => DATA, options: () => ({}), root: () => '', personal: () => true })
+  const noun = createInterview({ data: () => DATA, options: () => ({}), root: () => '' })
   await assert.rejects(noun.recordArgv(), { message: 'digi-me is not started yet' })
 })
 
@@ -128,37 +128,40 @@ test('parseCards skips a bracket in the preamble', () => {
   assert.equal(parseCards('Here are the cards [JSON]:\n' + JSON.stringify(raw), ['food']).length, 1)
 })
 
-test('the noun is available in personal sessions only, and says so in its own words', async () => {
-  let mine = true
-  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin', personal: () => mine })
+test('the noun is available when the my-agents bundle has an interview part, and says otherwise in its own words', async () => {
+  let data = DATA
+  const noun = createInterview({ data: () => data, options: () => ({ language: 'de' }), root: () => '/plugin' })
   assert.equal(await noun.available(), true)
-  mine = false
+  data = { ...DATA, interview: undefined }
   assert.equal(await noun.available(), false)
-  assert.equal((await noun.describe()).texts.unavailable, 'Das Interview läuft nur in persönlichen Sessions.')
-  const en = createInterview({ data: () => DATA, options: () => ({ language: 'en' }), root: () => '/plugin', personal: () => false })
-  assert.equal((await en.describe()).texts.unavailable, 'The interview runs in personal sessions only.')
+  data = null
+  assert.equal(await noun.available(), false)
+  assert.equal((await noun.describe()).texts.unavailable, 'Noch keine Fragen: digi-me ist hier noch nicht eingerichtet.')
+  const en = createInterview({ data: () => null, options: () => ({ language: 'en' }), root: () => '/plugin' })
+  assert.equal((await en.describe()).texts.unavailable, 'No questions yet: digi-me is not set up here.')
 })
 
-test('outside a personal session a typed answer asks for no feedback', async () => {
-  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin', personal: () => false })
+test('in a work session a typed answer in learn mode still asks for feedback', async () => {
+  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin' })
   const r = await noun.answered({ card: { question: 'Você gosta de café?' }, entry: { text: 'eu gosta', skipped: false }, ctx: { ...CTX, learn: true } })
-  assert.deepEqual(r, { line: 'Danke, notiert.' })
+  assert.equal(r.line, 'Danke, notiert.')
+  assert.match(r.request.prompt, /Answer: eu gosta/)
 })
 
 test('answered takes one object, as a call from another mod brings it', async () => {
-  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin', personal: () => true })
+  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin' })
   const r = await noun.answered({ card: { question: 'Kaffee oder Tee?' }, entry: { answer: 0, text: null, skipped: false }, ctx: CTX })
   assert.deepEqual(r, { line: 'Danke, notiert.' })
 })
 
 test('describe gives the host the circles and the words of the card', async () => {
-  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin', personal: () => true })
+  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin' })
   const info = await noun.describe()
   assert.deepEqual(info.circles.map((c) => [c.id, c.short]), [['familie', 'Familie'], ['beste-freunde', 'Beste'], ['freunde', 'Freunde'], ['arbeitsfreunde', 'Kollegen'], ['arbeit', 'Arbeit'], ['firmen', 'Firmen'], ['alle', 'Alle']])
   assert.equal(info.circles.find((c) => c.all)?.id, 'alle')
   assert.deepEqual([info.texts.sees, info.texts.onlyYou, info.texts.onlyMe], ['Sichtbar für', 'Das siehst nur du.', 'nur ich'])
   assert.deepEqual([info.texts.wait, info.texts.fail], ['Suche Fragen über dich … ☕', 'Etwas ist schiefgegangen'])
-  const en = await createInterview({ data: () => DATA, options: () => ({ language: 'en' }), root: () => '/plugin', personal: () => true }).describe()
+  const en = await createInterview({ data: () => DATA, options: () => ({ language: 'en' }), root: () => '/plugin' }).describe()
   assert.deepEqual(en.circles.map((c) => c.name), ['Family', 'Best friends', 'Friends', 'Work friends', 'Work', 'Companies', 'Everyone'])
   assert.deepEqual([en.texts.wait, en.texts.fail], ['Finding questions about you … ☕', 'Something went wrong'])
 })
@@ -203,7 +206,7 @@ test('a recent answer only the owner may see gives the model its topic, not its 
 
 test('the card circles are the CLI circles, in both languages', async () => {
   for (const language of ['de', 'en']) {
-    const info = await createInterview({ data: () => DATA, options: () => ({ language }), root: () => '/plugin', personal: () => true }).describe()
+    const info = await createInterview({ data: () => DATA, options: () => ({ language }), root: () => '/plugin' }).describe()
     assert.deepEqual(info.circles.map((c) => c.id), CIRCLES)
   }
 })

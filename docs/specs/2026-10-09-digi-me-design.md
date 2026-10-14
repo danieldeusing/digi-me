@@ -10,6 +10,9 @@ contract in §16 and §17.6) draws the interview. The contract is the same, exce
 takes one object `{ card, entry, ctx }`. Where §8 to §17 say "the host", read that mod.
 Keys, bands, toasts and widths in §8 to §17 describe an example host's UI and are not part of the
 contract; each host draws the card, the circles and "next" in its own way.
+Revision 9 (2026-10-14, Daniel: interview in every session): the interview runs in every session
+and always uses the `my-agents` facts; the core facts in the system prompt still follow the
+session's audience (§16).
 
 ## 1. Goal
 
@@ -533,8 +536,11 @@ corrects them through `confirm` cards.
   mode.
 - **The interview always reads the pulled `my-agents` bundle**, also on the owner device. Answers
   that are newer than the bundle's `published` time count towards the coverage too. The interview
-  runs only in sessions whose audience is `my-agents`; in a work session the deck says so and asks
-  nothing, so no personal question or fact reaches a work session or its model account.
+  runs in every session, whatever its audience (revision 9). The core facts in the system prompt
+  still follow the session's audience. `available()` is true when the pulled `my-agents` bundle
+  has an `interview` part, and false when this device is not a member of `my-agents` or nothing
+  was pulled yet; then the host shows the deck's `texts.unavailable` ("digi-me is not set up
+  here"). `status`, `request` and `answered` do not look at the session's audience.
 - **digi-me declares no `dependencies`.** An unmet dependency would unload the plugin without a
   message (spike 2). digi-me works without a host mod; only the interview needs one.
 - **`DIGI_ME_HOME`** also sets the home folder of the plugin's hooks, as for the CLI.
