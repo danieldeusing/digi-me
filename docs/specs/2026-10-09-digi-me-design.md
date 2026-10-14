@@ -8,6 +8,8 @@ everywhere; where §17 and any earlier section differ, §17 wins.
 Revision 8 (2026-10-14): capi has no decks any more. A host mod that draws lent decks (the deck
 contract in §16 and §17.6) draws the interview. The contract is the same, except that `answered`
 takes one object `{ card, entry, ctx }`. Where §8 to §17 say "the host", read that mod.
+Keys, bands, toasts and widths in §8 to §17 describe an example host's UI and are not part of the
+contract; each host draws the card, the circles and "next" in its own way.
 
 ## 1. Goal
 
@@ -300,10 +302,11 @@ draws the decks that other plugins lend.
   the old keys move to `facts`.
 - New store key `mode`: `{ deck, learn }`, shared across sessions. `learn` affects only decks
   that support it. The facts deck always uses the host's learn language.
-- The host has a way to switch the deck, and a way to switch learn mode.
+- A host that draws more than one deck may offer a way to switch the deck and learn mode.
 - The card view gets an `Input` element (one-line text field, `onSubmit`) for cards whose
   format is `free`.
-- A deck noun that is missing or throws makes the host fall back to `facts` and show a toast.
+- When a deck noun is missing or throws, the host draws no card for it and tells the person in its
+  own way; the session goes on.
 
 ### 8.2 The interview deck (`digi-me` plugin)
 
@@ -361,8 +364,8 @@ Answer entry:
   the last index, and `text` holds the answer); `scale` the index 0 to 4 of the options `1`…`5` (value = `options[answer]`); `confirm` 0 = yes,
   1 = partly, 2 = no; `free` `null`, and `text` holds the answer.
 
-The band shows the coverage next to the host's own status. When the coverage passes the next
-10 %, the host says that the digi-me "digivolved".
+`status()` gives the coverage, and the host shows it with the card. When the coverage passes the
+next 10 %, the host says that the digi-me "digivolved".
 
 ## 9. Seed and distill (`digi-me-distill`)
 
@@ -524,8 +527,8 @@ corrects them through `confirm` cards.
   - `recordArgv()` → the command the host runs with the answer entries as JSON lines on stdin.
 - **Answer cards** carry `format`, `question`, `options` (empty for `free`; `1`–`5` for
   `scale`, with `scaleLabels`), `other` (the last choice option opens the text field),
-  `domain`, `topic`, `s` and an optional `note`. Hotkeys: answers `1`–`6`, sensitivity `7`,
-  skip `8`, "don't ask again" `9`.
+  `domain`, `topic`, `s` and an optional `note`. The host offers each answer, the sensitivity,
+  skip and "don't ask again" on the card.
 - **`entry.lang`** is the deck's `language` (`de`), or the name of the host's learn language in learn
   mode.
 - **The interview always reads the pulled `my-agents` bundle**, also on the owner device. Answers
@@ -625,24 +628,24 @@ Rules for the bundle of one audience:
 - A card carries `sees`: the AI's suggestion, an array of circle ids of the deck. The host refuses a
   card whose `sees` names an unknown circle.
 - An answer entry carries `sees` (array) instead of `s`.
-- The ask stage loses key `7`; `8` skip and `9` "don't ask again" stay.
+- The ask stage loses the sensitivity choice; skip and "don't ask again" stay.
 
 ### 17.7 The card (changes §8.2)
 
 After an answer the reveal stage shows the thanks or the correction, then the circles of the
-answer, pre-checked with the AI's suggestion, and one sentence in plain words:
+answer, pre-checked with the AI's suggestion, and one sentence in plain words. An example host
+draws it like this:
 
 ```
 Sichtbar für (Vorschlag):  2 🏠 Familie ✓  3 💛 Beste ✓  4 👥 Freunde ✓  5 🤝 Kollegen ✓  6 💼 Arbeit ☐  7 🏢 Firmen ☐  8 🌍 Alle ☐   9 🔒 nur ich   1 weiter
 → Das sehen: Familie, Beste Freunde, Persönliche Freunde, Arbeitsfreunde. Nicht: Arbeit, Firmen, alle anderen.
 ```
 
-- `2`–`8` toggle the circles in the deck's order (a click works too); `9` unchecks all; `1`
-  accepts and shows the next card. Checking `alle` checks every circle; unchecking any circle
-  unchecks `alle` too.
+- Each circle toggles, in the deck's order; "nur ich" unchecks all; "next" accepts and shows
+  the next card. Checking `alle` checks every circle; unchecking any circle unchecks `alle` too.
 - "Vorschlag" disappears after the first change.
-- Chips show icon and short name while the band is at least 112 columns wide, otherwise the icon
-  only. The sentence uses the full names and is always shown. With no circle it reads
+- Chips show icon and short name when the card has room for them, otherwise the icon only. The
+  sentence uses the full names and is always shown. With no circle it reads
   `→ Das siehst nur du.` (English: `→ Only you see this.`).
 - The deck gives the host the words of the row title and the sentence through its `texts`
   (`sees`, `suggested`, `seenBy`, `notSeenBy`, `onlyYou`, `othersNot`).
@@ -652,7 +655,7 @@ Sichtbar für (Vorschlag):  2 🏠 Familie ✓  3 💛 Beste ✓  4 👥 Freunde
 - The answer goes into `pending:<deck>:<session>` at once, with the suggested `sees`, so that
   nothing is lost.
 - Each toggle changes `sees` of that pending entry.
-- The host sends the pending entries when the person presses `1`, when the card is left another way
+- The host sends the pending entries when the person chooses "next", when the card is left another way
   (another session moved on, a skip, a deck switch), or with the next answer.
 - A session that ends in the reveal stage leaves the entry pending; it goes out with its last
   `sees` at the next flush.

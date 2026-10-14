@@ -151,14 +151,16 @@ test('answered takes one object, as a call from another mod brings it', async ()
   assert.deepEqual(r, { line: 'Danke, notiert.' })
 })
 
-test('describe gives capi the circles and the words of the card', async () => {
+test('describe gives the host the circles and the words of the card', async () => {
   const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin', personal: () => true })
   const info = await noun.describe()
   assert.deepEqual(info.circles.map((c) => [c.id, c.short]), [['familie', 'Familie'], ['beste-freunde', 'Beste'], ['freunde', 'Freunde'], ['arbeitsfreunde', 'Kollegen'], ['arbeit', 'Arbeit'], ['firmen', 'Firmen'], ['alle', 'Alle']])
   assert.equal(info.circles.find((c) => c.all)?.id, 'alle')
   assert.deepEqual([info.texts.sees, info.texts.onlyYou, info.texts.onlyMe], ['Sichtbar für', 'Das siehst nur du.', 'nur ich'])
+  assert.deepEqual([info.texts.wait, info.texts.fail], ['Suche Fragen über dich … ☕', 'Etwas ist schiefgegangen'])
   const en = await createInterview({ data: () => DATA, options: () => ({ language: 'en' }), root: () => '/plugin', personal: () => true }).describe()
   assert.deepEqual(en.circles.map((c) => c.name), ['Family', 'Best friends', 'Friends', 'Work friends', 'Work', 'Companies', 'Everyone'])
+  assert.deepEqual([en.texts.wait, en.texts.fail], ['Finding questions about you … ☕', 'Something went wrong'])
 })
 
 test('parseCards keeps known circles, expands alle, and drops unknown ones', () => {

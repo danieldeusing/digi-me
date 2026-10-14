@@ -31,14 +31,14 @@ const LANGUAGES = { de: 'German', en: 'English' }
 const SIX_MONTHS = 183 * 86_400_000
 const TEXTS = {
   de: {
-    wait: 'Capi sucht Fragen über dich … ☕', empty: 'Gerade keine Fragen. Gleich kommen neue.', fail: 'Capi ist gestolpert',
+    wait: 'Suche Fragen über dich … ☕', empty: 'Gerade keine Fragen. Gleich kommen neue.', fail: 'Etwas ist schiefgegangen',
     doneToday: 'Für heute genug gefragt. Bis morgen!', skip: 'überspringen', stop: 'nicht mehr fragen', next: 'weiter',
     placeholder: 'deine Antwort …', send: 'senden', thanks: 'Danke, notiert.', coverage: 'Abdeckung',
     unavailable: 'Das Interview läuft nur in persönlichen Sessions.',
     sees: 'Sichtbar für', suggested: 'Vorschlag', seenBy: 'Das sehen', notSeenBy: 'Nicht', onlyYou: 'Das siehst nur du.', othersNot: 'alle anderen', onlyMe: 'nur ich',
   },
   en: {
-    wait: 'Capi is finding questions about you … ☕', empty: 'No questions right now. More soon.', fail: 'Capi stumbled',
+    wait: 'Finding questions about you … ☕', empty: 'No questions right now. More soon.', fail: 'Something went wrong',
     doneToday: 'Enough questions for today. See you tomorrow!', skip: 'skip', stop: "don't ask again", next: 'next',
     placeholder: 'your answer …', send: 'send', thanks: 'Thanks, noted.', coverage: 'coverage',
     unavailable: 'The interview runs in personal sessions only.',
