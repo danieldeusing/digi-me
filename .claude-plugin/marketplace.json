@@ -8,7 +8,7 @@
     {
       "name": "digi-me",
       "source": "./",
-      "description": "Your digital me: your core facts in every Claude Code session, and an interview deck for capi",
+      "description": "Your digital me: your core facts in every Claude Code session, and an interview deck for a host mod",
       "author": { "name": "Daniel Deusing" }
     }
   ]

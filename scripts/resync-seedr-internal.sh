@@ -58,12 +58,12 @@ import json, sys
 print(json.dumps({
     "v": 1, "kind": "add-local", "type": "plugin", "slug": "digi-me", "sourcePath": sys.argv[1],
     "name": "digi-me",
-    "description": "Your digital me: your core facts in every Claude Code session, and an interview deck for capi.",
+    "description": "Your digital me: your core facts in every Claude Code session, and an interview deck for a host mod.",
     "longDescription": (
         "digi-me gives every coding agent the same picture of you.\n\n"
         "- **Core facts** in each session's system prompt, chosen per folder: `my-agents` for personal "
         "sessions, `work-agents` for the folders in `workPaths`\n"
-        "- **An interview** that capi asks in the band above the prompt, in German or English, or in the "
+        "- **An interview** that a host mod asks in the band above the prompt, in German or English, or in the "
         "language you learn with corrections\n"
         "- **Skills** `digi-me`, `digi-me-setup` and `digi-me-distill` to set it up and turn answers into facts\n\n"
         "Your data stays in your own private data repository and reaches each device end-to-end encrypted "

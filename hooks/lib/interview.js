@@ -1,5 +1,5 @@
-// The interview deck: the questions Capi asks the owner, built from the pulled my-agents
-// bundle. Pure functions; createInterview() wraps them as the `digiMe` noun capi uses.
+// The interview deck: the questions the host mod asks the owner, built from the pulled my-agents
+// bundle. Pure functions; createInterview() wraps them as the `digiMe` noun the host mod draws.
 
 import { answerCounts, coverage } from './session.js'
 

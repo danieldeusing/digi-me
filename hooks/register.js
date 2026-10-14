@@ -1,5 +1,5 @@
 // digi-me in Claude Code: the owner's core facts in every session's system prompt, the
-// local bundles kept fresh with `digi-me pull`, and the interview deck lent to capi.
+// local bundles kept fresh with `digi-me pull`, and the interview deck lent to a host mod.
 //
 // Where things live:
 //   <home>/.digi-me/bundles/<audience>/  the files `digi-me pull` writes (home: DIGI_ME_HOME or HOME)

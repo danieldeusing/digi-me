@@ -5,11 +5,14 @@ plan 1's execution: §6.1, §8.1, §11, §12 and §15.
 Revision 6 (2026-10-10) adds §16, the rulings for plan 2; where §16 and §4–§8 differ, §16 wins.
 Revision 7 (2026-10-12) adds §17, visibility circles. They replace the sensitivity levels
 everywhere; where §17 and any earlier section differ, §17 wins.
+Revision 8 (2026-10-14): capi has no decks any more. A host mod that draws lent decks (the deck
+contract in §16 and §17.6) draws the interview. The contract is the same, except that `answered`
+takes one object `{ card, entry, ctx }`. Where §8 to §17 say "the host", read that mod.
 
 ## 1. Goal
 
 A digital me: one private source of truth about a person, used by every agent, chat and app
-that the person allows. It grows through an interview: Capi, the capybara of the capi mod,
+that the person allows. It grows through an interview: a host mod that draws lent decks
 asks the questions inside Claude Code. The same interview can teach a language on the way
 (for Daniel: Brazilian Portuguese).
 
@@ -33,7 +36,7 @@ Phase 1 builds the data provider for real (keys, encrypted bundles, relay API). 
 |---|---|---|
 | **`digi-me`** | public | all code: CLI, relay, Claude Code plugin, skills, later the packaging for other clients and the app |
 | **`digi-daniel`** | private | Daniel's data only: facts, audiences, coverage map, answer archive. No code. |
-| `capi-cc-mod` | public | gets a deck extension point (section 8.1). No personal data. |
+| the host mod | not part of digi-me | draws lent decks (section 8.1). No personal data. |
 
 Everyone else makes their own `digi-<name>` data repo with `digi-me init`.
 
@@ -229,7 +232,7 @@ that, but Daniel has no such device now.
 ## 7. The Claude Code plugin `digi-me`
 
 ```
-.claude-plugin/plugin.json        # hooks, skills, userConfig; dependencies: ["capi"] if spike 2 allows
+.claude-plugin/plugin.json        # hooks, skills, userConfig; no dependencies (§16)
 .claude-plugin/marketplace.json
 hooks/hooks.json                  # { "modules": ["./register.js"] }
 hooks/register.js
@@ -247,7 +250,7 @@ templates/                        # facts/, audiences.yaml, domains.md
   shows a toast and keeps the last cache.
 - `prompt.compose`: add one section, the `core.md` of this session's bundle (section 6.2),
   and one line that names the bundle folder for the skill. No bundle in the cache: no section.
-- The capi deck noun (section 8.2).
+- The deck noun that the host mod draws (section 8.2).
 
 ### 7.2 Skills
 
@@ -271,16 +274,16 @@ templates/                        # facts/, audiences.yaml, domains.md
 | `perDay` | 10 | new interview cards a day |
 | `language` | `de` | interview language without learn mode, as a BCP 47 code |
 
-## 8. Interview inside capi
+## 8. Interview in a host mod
 
-### 8.1 Deck extension point (capi, public)
+### 8.1 Deck extension point (host mod)
 
-capi today has one card source. It gets a deck concept, and its facts become the built-in
-deck `facts`.
+A host mod that draws lent decks has one built-in card source, the deck `facts`. It also
+draws the decks that other plugins lend.
 
-- A deck is a noun on `$` that another plugin adds in `engine.create`. capi publishes the type
-  contract `CapiDeck` in `types/index.d.ts`, named in its `plugin.json` as `types`.
-- capi uses every loaded noun that matches `CapiDeck`. A new setting `CAPI_DECKS` can limit the
+- A deck is a noun on `$` that another plugin adds in `engine.create`. The host publishes the
+  type contract of a deck in its `types/index.d.ts`, named in its `plugin.json` as `types`.
+- The host uses every loaded noun that matches the contract. A host setting can limit the
   list (default: all).
 - A deck noun may hold **methods only** (spike 1: a data field makes `engine.create` fail and
   unloads the plugin). A deck has:
@@ -288,7 +291,7 @@ deck `facts`.
   - `request(ctx)`: the model request for the next batch. `ctx` holds the config, the date,
     the activity hint, `learn`, and the deck's last 30 entries;
   - `parse(text)`: cards from the model reply;
-  - `record(entries)`: stores answer entries. capi keeps an entry in the store key
+  - `record(entries)`: stores answer entries. The host keeps an entry in the store key
     `pending:<deck>` until `record` succeeds, and retries at the next sync;
   - in `describe()`: `perDay`, a daily cap of new cards, and `extras`, optional, which of the
     panels gram / conj / tradução the deck shows.
@@ -296,11 +299,11 @@ deck `facts`.
 - Store keys `queue` and `current` become `queue:<deck>` and `current:<deck>`. On first load,
   the old keys move to `facts`.
 - New store key `mode`: `{ deck, learn }`, shared across sessions. `learn` affects only decks
-  that support it. The facts deck always uses `CAPI_LEARN_LANGUAGE`.
-- `/capi <deck id>` switches the deck. `/capi learn on|off` switches learn mode.
+  that support it. The facts deck always uses the host's learn language.
+- The host has a way to switch the deck, and a way to switch learn mode.
 - The card view gets an `Input` element (one-line text field, `onSubmit`) for cards whose
   format is `free`.
-- A deck noun that is missing or throws makes capi fall back to `facts` and show a toast.
+- A deck noun that is missing or throws makes the host fall back to `facts` and show a toast.
 
 ### 8.2 The interview deck (`digi-me` plugin)
 
@@ -324,7 +327,7 @@ Language:
 | Mode | Question | Answer | After the answer |
 |---|---|---|---|
 | interview | `language` (`de`) | the same, by button or text | a short thanks, the next card |
-| interview + learn | `CAPI_LEARN_LANGUAGE` (pt-BR) | the same language | the correction of the answer, with a note in `CAPI_NATIVE_LANGUAGE`, as in the facts deck |
+| interview + learn | the host's learn language (pt-BR) | the same language | the correction of the answer, with a note in the host's native language, as in the facts deck |
 
 Question selection, inside `request(ctx)`. The prompt gets:
 - the coverage map and the answer count per domain;
@@ -358,8 +361,8 @@ Answer entry:
   the last index, and `text` holds the answer); `scale` the index 0 to 4 of the options `1`…`5` (value = `options[answer]`); `confirm` 0 = yes,
   1 = partly, 2 = no; `free` `null`, and `text` holds the answer.
 
-The band shows the coverage next to capi's level. When the coverage passes the next 10 %, Capi
-says that the digi-me "digivolved".
+The band shows the coverage next to the host's own status. When the coverage passes the next
+10 %, the host says that the digi-me "digivolved".
 
 ## 9. Seed and distill (`digi-me-distill`)
 
@@ -395,22 +398,22 @@ corrects them through `confirm` cards.
   (its `registry-internal` folder) as a plugin item with compatibility `claude`. A
   `scripts/resync-seedr-internal.sh` in `digi-me` publishes it, as the kit's script does.
 - `update-clients.sh` gets `add digi-me plugin claude`.
-- capi comes from public seedr or its marketplace, as today. Spike 2 (section 13) decides
-  whether `dependencies` installs it.
+- The host mod comes from wherever its owner gets it. digi-me declares no `dependencies`
+  (§16), so it does not install the host.
 - Data never goes through seedr. It goes through the relay.
 - `digi-daniel` lives at `~/Work/danieldeusing/digi-daniel` on ddStudio. Other Macs need no
   clone.
 
 ## 11. Error handling
 
-- The relay is not reachable: `pull` keeps the cache; `answer` fails and capi keeps the
+- The relay is not reachable: `pull` keeps the cache; `answer` fails and the host keeps the
   entries in `pending:interview`. Nothing is lost.
 - A removed device keeps what it already downloaded (§5.1 wins over the next point): the relay
   answers `401`, and `pull` keeps the cache. How `pull` reports this is decided in plan 2.
 - A bundle of an audience in `config.json` does not decrypt (wrong key): `pull`
   deletes that audience's cache folder and says so.
 - The model returns malformed cards: `parse` drops them.
-- The deck noun throws: capi falls back to the facts deck.
+- The deck noun throws: the host falls back to the facts deck.
 - `audiences.yaml` is invalid: `build` stops with the line number and publishes nothing.
 - A fact without `s`: `build` stops. There is no default sensitivity for a stored fact.
 
@@ -427,9 +430,9 @@ corrects them through `confirm` cards.
   `@cloudflare/vitest-pool-workers` 0.23.0 needed vitest 4): every row of the table in 5.2,
   each token role allowed and refused, the size limit, `ETag` and `304`.
 - Plugin (`claude plugin test`): `prompt.compose` with and without cache, the deck noun with a
-  stub capi, `record` failure keeps entries pending.
-- capi: `node --test` and `claude plugin test` for the deck switch, the store key migration,
-  `pending:<deck>`, `/capi learn`, the `Input` card and the fallback.
+  stub host, `record` failure keeps entries pending.
+- The host mod: its own tests for the deck switch, `pending:<deck>`, learn mode, the `Input`
+  card and the fallback.
 - End to end on two Macs: answer on ddAir, `inbox` and distill on ddStudio, `publish`, new
   session on ddAir sees the new fact.
 
@@ -437,8 +440,8 @@ corrects them through `confirm` cards.
 
 0. Spikes:
    1. One plugin calls functions on a noun that another plugin added in `engine.create`.
-      Fallback: `digi-me` writes card batches into its own `$.store` key and capi reads them.
-   2. A plugin with `dependencies: ["capi"]`: does the install pull capi in?
+      Fallback: `digi-me` writes card batches into its own `$.store` key and the host reads them.
+   2. A plugin with `dependencies: ["<host mod>"]`: does the install pull the host in?
    3. A hook runs `node <plugin root>/cli/dist/digi-me.mjs` with `$.process.run`: does it work,
       and how long does `pull` take at session start?
    4. `age-encryption` in Node 20: encrypt to several recipients and decrypt with the CLI
@@ -446,7 +449,7 @@ corrects them through `confirm` cards.
 1. CLI: data model, rules, `build`, keys, tests.
 2. Relay: Worker, R2, tokens, tests, deploy to `<relay host>`.
 3. CLI: `init`, `login`, `device`, `publish`, `pull`, `answer`, `inbox`.
-4. capi: the deck extension point, released as a new capi version.
+4. The host mod: the deck extension point, released as a new version of the host.
 5. Plugin: hooks, interview deck, skills, userConfig.
 6. `digi-daniel`: `init`, seed, first `publish`; join ddAir.
 7. seedr-internal and `update-clients.sh`.
@@ -505,11 +508,11 @@ corrects them through `confirm` cards.
   path and its iCloud log. Only other decks use keys with their id: `queue:<id>`,
   `current:<id>`, `recent:<id>`, `pending:<id>:<session>`, `refill:<id>`, `count:<id>:<day>`. There is no
   key migration. (Replaces the key part of §8.1.)
-- **capi finds decks by name.** `CAPI_DECKS` selects decks (separated by `|`, default
-  `digiMe`) among the ones capi knows. The engine forbids `$[name]` and `$` across an import, so
-  capi spells each deck noun statically (a facade in `register.js`) and hands `decks.js` an `io`
-  object instead of `$`. A new deck needs a branch in `deckIo` and a facade function in capi's `register.js`.
-- **A deck noun is pure.** Its methods need no `$`; capi makes every model call, runs the
+- **The host finds decks by name.** A host setting selects decks (separated by `|`, default
+  `digiMe`) among the ones the host knows. The engine forbids `$[name]` and `$` across an import, so
+  the host spells each deck noun statically (a facade in its `register.js`) and hands `decks.js` an `io`
+  object instead of `$`. A new deck needs a branch in `deckIo` and a facade function in the host's `register.js`.
+- **A deck noun is pure.** Its methods need no `$`; the host makes every model call, runs the
   record command and passes all data in:
   - `describe()` → `{ id, label, icon, perDay, language, texts }`;
   - `status()` → header pairs, for example `[['Abdeckung', '12 %']]`;
@@ -518,22 +521,20 @@ corrects them through `confirm` cards.
     `{ line, patch: { corrected, meaning } }`;
   - a call into another mod's noun takes exactly one input (the engine's host check), so a
     method with several inputs takes one object;
-  - `recordArgv()` → the command capi runs with the answer entries as JSON lines on stdin.
+  - `recordArgv()` → the command the host runs with the answer entries as JSON lines on stdin.
 - **Answer cards** carry `format`, `question`, `options` (empty for `free`; `1`–`5` for
   `scale`, with `scaleLabels`), `other` (the last choice option opens the text field),
   `domain`, `topic`, `s` and an optional `note`. Hotkeys: answers `1`–`6`, sensitivity `7`,
   skip `8`, "don't ask again" `9`.
-- **`entry.lang`** is the deck's `language` (`de`), or the name of `CAPI_LEARN_LANGUAGE` in learn
+- **`entry.lang`** is the deck's `language` (`de`), or the name of the host's learn language in learn
   mode.
 - **The interview always reads the pulled `my-agents` bundle**, also on the owner device. Answers
   that are newer than the bundle's `published` time count towards the coverage too. The interview
   runs only in sessions whose audience is `my-agents`; in a work session the deck says so and asks
   nothing, so no personal question or fact reaches a work session or its model account.
 - **digi-me declares no `dependencies`.** An unmet dependency would unload the plugin without a
-  message (spike 2). digi-me works without capi; only the interview needs it.
+  message (spike 2). digi-me works without a host mod; only the interview needs one.
 - **`DIGI_ME_HOME`** also sets the home folder of the plugin's hooks, as for the CLI.
-- **capi changes happen in a git worktree** (branch `decks`), because Daniel's live capi loads
-  from the main working tree and reloads on every save.
 
 ## 17. Visibility circles (revision 7)
 
@@ -620,8 +621,8 @@ Rules for the bundle of one audience:
 ### 17.6 The deck contract (changes §8.1 and §16)
 
 - `describe()` also returns `circles`: an array of 1 to 7 `{ id, icon, short, name }`, in the
-  order the card shows them. capi knows no circle of its own.
-- A card carries `sees`: the AI's suggestion, an array of circle ids of the deck. capi refuses a
+  order the card shows them. The host knows no circle of its own.
+- A card carries `sees`: the AI's suggestion, an array of circle ids of the deck. The host refuses a
   card whose `sees` names an unknown circle.
 - An answer entry carries `sees` (array) instead of `s`.
 - The ask stage loses key `7`; `8` skip and `9` "don't ask again" stay.
@@ -643,7 +644,7 @@ Sichtbar für (Vorschlag):  2 🏠 Familie ✓  3 💛 Beste ✓  4 👥 Freunde
 - Chips show icon and short name while the band is at least 112 columns wide, otherwise the icon
   only. The sentence uses the full names and is always shown. With no circle it reads
   `→ Das siehst nur du.` (English: `→ Only you see this.`).
-- The deck gives capi the words of the row title and the sentence through its `texts`
+- The deck gives the host the words of the row title and the sentence through its `texts`
   (`sees`, `suggested`, `seenBy`, `notSeenBy`, `onlyYou`, `othersNot`).
 
 ### 17.8 When an answer is final (changes §16)
@@ -651,8 +652,8 @@ Sichtbar für (Vorschlag):  2 🏠 Familie ✓  3 💛 Beste ✓  4 👥 Freunde
 - The answer goes into `pending:<deck>:<session>` at once, with the suggested `sees`, so that
   nothing is lost.
 - Each toggle changes `sees` of that pending entry.
-- capi sends the pending entries when the person presses `1`, when the card is left another way
-  (another session moved on, `/capi skip`, a deck switch), or with the next answer.
+- The host sends the pending entries when the person presses `1`, when the card is left another way
+  (another session moved on, a skip, a deck switch), or with the next answer.
 - A session that ends in the reveal stage leaves the entry pending; it goes out with its last
   `sees` at the next flush.
 - A skipped card and "don't ask again" have no reveal stage: their entries go out at once, as

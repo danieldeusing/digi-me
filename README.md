@@ -13,8 +13,9 @@ private repository, and reach each of your devices end-to-end encrypted.
 - **The relay** is a small Cloudflare Worker with an R2 bucket. It stores only ciphertext.
 - **The Claude Code plugin** pulls the bundles when a session starts. It adds the core facts
   to the system prompt of the session: `my-agents`, or `work-agents` in the folders of
-  `workPaths`. It also lends [capi](https://github.com/danieldeusing/capi-cc-mod) a deck of
-  interview cards, so that capi can ask you what the facts still miss.
+  `workPaths`. It also lends a deck of interview cards to a host mod that draws lent decks (the
+  deck contract in §16 and §17.6 of the design spec), so that the host can ask you what the facts
+  still miss.
 
 ## Install
 
@@ -23,12 +24,8 @@ claude plugin marketplace add danieldeusing/digi-me
 claude plugin install digi-me@digi-me
 ```
 
-For the interview you also need capi, version 0.2.0 or newer:
-
-```bash
-claude plugin marketplace add danieldeusing/capi-cc-mod
-claude plugin install capi@capi
-```
+For the interview you also need a host mod that draws lent decks. digi-me works without one;
+only the interview needs it.
 
 ## Set up
 
