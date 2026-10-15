@@ -14,6 +14,10 @@ Revision 9 (2026-10-14, Daniel: interview in every session): the interview runs 
 and always uses the `my-agents` facts; the core facts in the system prompt still follow the
 session's audience (§16).
 
+Revision 10 (2026-10-14, Daniel: questions are unlimited): no daily limit. The option `perDay`,
+`describe().perDay` and the text `doneToday` are gone; a host asks for new cards whenever its
+queue runs low.
+
 ## 1. Goal
 
 A digital me: one private source of truth about a person, used by every agent, chat and app
@@ -276,7 +280,6 @@ templates/                        # facts/, audiences.yaml, domains.md
 | Field | Default | Use |
 |---|---|---|
 | `workPaths` | `[]` | globs for `work-agents` sessions |
-| `perDay` | 10 | new interview cards a day |
 | `language` | `de` | interview language without learn mode, as a BCP 47 code |
 
 ## 8. Interview in a host mod
@@ -292,14 +295,13 @@ draws the decks that other plugins lend.
   list (default: all).
 - A deck noun may hold **methods only** (spike 1: a data field makes `engine.create` fail and
   unloads the plugin). A deck has:
-  - `describe()`: returns `{ id, label, icon, perDay, extras }`;
+  - `describe()`: returns `{ id, label, icon, extras }`;
   - `request(ctx)`: the model request for the next batch. `ctx` holds the config, the date,
     the activity hint, `learn`, and the deck's last 30 entries;
   - `parse(text)`: cards from the model reply;
   - `record(entries)`: stores answer entries. The host keeps an entry in the store key
     `pending:<deck>` until `record` succeeds, and retries at the next sync;
-  - in `describe()`: `perDay`, a daily cap of new cards, and `extras`, optional, which of the
-    panels gram / conj / tradução the deck shows.
+  - in `describe()`: `extras`, optional, which of the panels gram / conj / tradução the deck shows.
 - The facts deck keeps its current log and iCloud sync unchanged.
 - Store keys `queue` and `current` become `queue:<deck>` and `current:<deck>`. On first load,
   the old keys move to `facts`.
@@ -520,7 +522,7 @@ corrects them through `confirm` cards.
   object instead of `$`. A new deck needs a branch in `deckIo` and a facade function in the host's `register.js`.
 - **A deck noun is pure.** Its methods need no `$`; the host makes every model call, runs the
   record command and passes all data in:
-  - `describe()` → `{ id, label, icon, perDay, language, texts }`;
+  - `describe()` → `{ id, label, icon, language, texts }`;
   - `status()` → header pairs, for example `[['Abdeckung', '12 %']]`;
   - `request(ctx)` → `{ system, prompt, call }`; `parse(text)` → cards;
   - `answered({ card, entry, ctx })` → `{ line, request? }`; `parseFeedback(text)` →

@@ -32,14 +32,14 @@ const SIX_MONTHS = 183 * 86_400_000
 const TEXTS = {
   de: {
     wait: 'Suche Fragen über dich … ☕', empty: 'Gerade keine Fragen. Gleich kommen neue.', fail: 'Etwas ist schiefgegangen',
-    doneToday: 'Für heute genug gefragt. Bis morgen!', skip: 'überspringen', stop: 'nicht mehr fragen', next: 'weiter',
+    skip: 'überspringen', stop: 'nicht mehr fragen', next: 'weiter',
     placeholder: 'deine Antwort …', send: 'senden', thanks: 'Danke, notiert.', coverage: 'Abdeckung', domain: 'Bereich', topic: 'Thema', own: 'Eigene Antwort',
     unavailable: 'Noch keine Fragen: digi-me ist hier noch nicht eingerichtet.',
     sees: 'Sichtbar für', suggested: 'Vorschlag', seenBy: 'Das sehen', notSeenBy: 'Nicht', onlyYou: 'Das siehst nur du.', othersNot: 'alle anderen', onlyMe: 'nur ich',
   },
   en: {
     wait: 'Finding questions about you … ☕', empty: 'No questions right now. More soon.', fail: 'Something went wrong',
-    doneToday: 'Enough questions for today. See you tomorrow!', skip: 'skip', stop: "don't ask again", next: 'next',
+    skip: 'skip', stop: "don't ask again", next: 'next',
     placeholder: 'your answer …', send: 'send', thanks: 'Thanks, noted.', coverage: 'coverage', domain: 'area', topic: 'topic', own: 'Own answer',
     unavailable: 'No questions yet: digi-me is not set up here.',
     sees: 'Visible to', suggested: 'suggestion', seenBy: 'Seen by', notSeenBy: 'Not', onlyYou: 'Only you see this.', othersNot: 'everyone else', onlyMe: 'only me',
@@ -206,7 +206,6 @@ export function createInterview({ data, options, root }) {
       id: 'interview',
       label: 'digi-me',
       icon: '🪞',
-      perDay: Math.max(0, Math.floor(Number(options().perDay ?? 10))),
       language: language(),
       texts: textsFor(language()),
       circles: CIRCLES[language()] ?? CIRCLES.en,

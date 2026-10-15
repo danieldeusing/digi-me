@@ -96,10 +96,13 @@ test('parseFeedback reads the correction, or returns null', () => {
 })
 
 test('the noun has methods only and describes itself', async () => {
-  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de', perDay: 7.6 }), root: () => '/plugin' })
+  const noun = createInterview({ data: () => DATA, options: () => ({ language: 'de' }), root: () => '/plugin' })
   assert.ok(Object.values(noun).every((v) => typeof v === 'function'))
   const info = await noun.describe()
-  assert.deepEqual([info.id, info.label, info.perDay, info.language, info.texts.skip], ['interview', 'digi-me', 7, 'de', 'überspringen'])
+  assert.deepEqual([info.id, info.label, info.language, info.texts.skip], ['interview', 'digi-me', 'de', 'überspringen'])
+  // no daily limit: the questions never run out for the day
+  assert.equal('perDay' in info, false)
+  assert.equal('doneToday' in info.texts, false)
   assert.deepEqual(await noun.status(), [['Abdeckung', '6 %']])
   assert.deepEqual(await noun.recordArgv(), ['node', '/plugin/cli/dist/digi-me.mjs', 'answer'])
   assert.equal((await noun.parse(JSON.stringify([{ format: 'free', domain: 'food', topic: 't', question: 'Q?', sees: ['familie', 'beste-freunde', 'freunde', 'arbeitsfreunde'] }]))).length, 1)

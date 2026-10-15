@@ -47,7 +47,6 @@ Set these in the plugin's settings.
 | key | what it sets | default |
 | --- | --- | --- |
 | `workPaths` | folders or globs whose sessions get `work-agents` instead of `my-agents`. `*` is one folder name, `**` any depth, `?` one character, `[..]` one of a set. | none |
-| `perDay` | new interview cards a day, at most | `10` |
 | `language` | the language of the interview (`de` or `en`), without learn mode | `de` |
 
 ## Your own relay

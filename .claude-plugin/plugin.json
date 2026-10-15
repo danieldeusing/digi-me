@@ -2,7 +2,9 @@
   "name": "digi-me",
   "version": "0.1.4",
   "description": "Your digital me: your core facts in every Claude Code session, and an interview deck for a host mod",
-  "author": { "name": "Daniel Deusing" },
+  "author": {
+    "name": "Daniel Deusing"
+  },
   "userConfig": {
     "workPaths": {
       "type": "string",
@@ -10,20 +12,15 @@
       "title": "Work folders",
       "description": "Folders or globs (* one folder name, ** any depth, ? one character, [..] one of a set), separated by commas, whose sessions get the work-agents bundle instead of my-agents"
     },
-    "perDay": {
-      "type": "number",
-      "title": "Interview cards a day",
-      "description": "New interview cards a day at most",
-      "default": 10,
-      "min": 0,
-      "max": 100
-    },
     "language": {
       "type": "string",
       "title": "Interview language",
       "description": "The language of the interview without learn mode",
       "default": "de",
-      "options": ["de", "en"]
+      "options": [
+        "de",
+        "en"
+      ]
     }
   }
 }
