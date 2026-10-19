@@ -14,12 +14,12 @@ Revision 9 (2026-10-14, Daniel: interview in every session): the interview runs 
 and always uses the `my-agents` facts; the core facts in the system prompt still follow the
 session's audience (§16).
 
-Revision 11 (2026-10-19, Daniel: a fully automatic memory loop): distill may run unattended on the
-owner device (§9.3), and the bundle carries the questions asked so far (`interview.asked`).
-
 Revision 10 (2026-10-14, Daniel: questions are unlimited): no daily limit. The option `perDay`,
 `describe().perDay` and the text `doneToday` are gone; a host asks for new cards whenever its
 queue runs low.
+
+Revision 11 (2026-10-19, Daniel: a fully automatic memory loop): distill may run unattended on the
+owner device (§9.3), and the bundle carries the questions asked so far (`interview.asked`).
 
 ## 1. Goal
 
@@ -126,7 +126,10 @@ no LLM, no time stamp, the same input gives the same bytes.
   `s`, `c` and `t`; `a`, `allow`, `deny` and `core` are dropped.
 - `interview`: only for an audience with `interview: true` (for Daniel: `my-agents`). It holds
   the coverage map, the answer count per domain (skipped answers do not count) and the `stop`
-  topics, so that devices without the data repo can run the interview deck.
+  topics, so that devices without the data repo can run the interview deck. It also holds
+  `asked`: the last 1000 questions, each `{ domain, topic, question }`. `question` is `null` when
+  only the owner may see the answer. Only the bundle of an audience that may see every circle
+  (`any`) carries the list; the others get `[]`.
 - `publish` adds `version` (one more than the last publish, kept in `.build/version`) and
   `published` (the time) before it encrypts. It uploads only bundles whose audience has
   members. In phase 1, `public` has none, so it is built and not uploaded.
@@ -300,7 +303,8 @@ draws the decks that other plugins lend.
   unloads the plugin). A deck has:
   - `describe()`: returns `{ id, label, icon, extras }`;
   - `request(ctx)`: the model request for the next batch. `ctx` holds the config, the date,
-    the activity hint, `learn`, and the deck's last 30 entries;
+    the activity hint, `learn`, the deck's last 30 entries, and `asked`: the deck's own
+    questions asked so far;
   - `parse(text)`: cards from the model reply;
   - `record(entries)`: stores answer entries. The host keeps an entry in the store key
     `pending:<deck>` until `record` succeeds, and retries at the next sync;
@@ -406,16 +410,27 @@ corrects them through `confirm` cards.
 ### 9.3 Memory loop (unattended)
 
 The owner may let distill run by itself on the owner device, for example as a scheduled task
-every four hours. It runs §9.2 without the approval steps: every edit goes in as the answer says,
-with the circles the owner chose on the card; an answer without circles stays owner-only; a
-contradiction is marked, never overwritten; `core: true` is never set. `digi-me build` must pass,
-then the loop commits, pushes and publishes. A run without new answers changes nothing. The
-`digi-me-distill` skill names the exact rules ("Unattended").
+every four hours. It runs §9.2 without the approval steps:
 
-The bundle's interview part also lists every question asked (`interview.asked`: domain, topic,
-question, time, skipped, circles; a question whose answer only the owner may see goes by its topic
-alone). The host passes its own list as `ctx.asked`; a request lists both as "asked before", so no
-device asks a question another device asked.
+- Every edit goes in as the answer says, with the circles the owner chose on the card. An answer
+  without circles stays owner-only.
+- The circles of an existing fact never widen. A narrower answer becomes a fact of its own.
+- A contradiction, or a confirm card answered "partly" or "no", lowers the old fact and marks it;
+  the owner's words become a new fact. Nothing is overwritten. `core: true` is never set.
+- One lock (`answers/.loop.lock`) keeps two runs apart; the interactive distill takes it too. A lock
+  older than two hours is taken over.
+- The run stops with **Blocked** when `facts/` or `answers/` hold uncommitted changes, when a pull
+  has a conflict, when `digi-me build` fails twice, or when publish fails.
+- The answers from `inbox` are committed and pushed at once, because the relay no longer holds
+  them. A run pushes commits that an earlier run left behind, and publishes when the last publish
+  is older than HEAD (`.build/published`).
+- A run without new answers changes nothing.
+
+The `digi-me-distill` skill names the exact rules ("Unattended").
+
+The bundle's interview part also lists the questions asked (`interview.asked`, §4.4). The host
+passes its own list as `ctx.asked`; a request lists both as "asked before", so no device asks a
+question another device asked.
 
 ## 10. Distribution for Daniel (phase 1)
 
@@ -653,6 +668,7 @@ Rules for the bundle of one audience:
 - A card carries `sees`: the AI's suggestion, an array of circle ids of the deck. The host refuses a
   card whose `sees` names an unknown circle.
 - An answer entry carries `sees` (array) instead of `s`.
+- `request(ctx)` also gets `ctx.asked`, the host's list of the deck's questions asked so far.
 - The ask stage loses the sensitivity choice; skip and "don't ask again" stay.
 
 ### 17.7 The card (changes §8.2)

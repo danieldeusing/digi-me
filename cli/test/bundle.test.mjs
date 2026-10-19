@@ -72,11 +72,44 @@ test('the interview part lists every question asked, an owner-only one by its to
   writeFileSync(join(dir, 'answers', '2026-11.jsonl'), [
     { id: 'a-2', domain: 'humor', topic: 'humor type', question: 'Welche Art von Humor?', ts: '2026-11-01T10:00:00Z', skipped: false, sees: ['familie'] },
     { id: 'a-3', domain: 'health-sport', topic: 'knee', question: 'Was ist mit deinem Knie?', ts: '2026-11-02T10:00:00Z', skipped: false, sees: [] },
+    // no circles at all: owner-only, like distill treats it
+    { id: 'a-4', domain: 'health-sport', topic: 'back', question: 'Wie geht es deinem Rücken?', ts: '2026-11-03T10:00:00Z', skipped: false },
   ].map((e) => JSON.stringify(e)).join('\n') + '\n')
   const asked = buildBundles(loadData(dir))['my-agents'].interview.asked
-  assert.deepEqual(asked.slice(-2), [
-    { domain: 'humor', topic: 'humor type', question: 'Welche Art von Humor?', ts: '2026-11-01T10:00:00Z', skipped: false, sees: ['familie'] },
-    { domain: 'health-sport', topic: 'knee', question: null, ts: '2026-11-02T10:00:00Z', skipped: false, sees: [] },
+  assert.deepEqual(asked.slice(-3), [
+    { domain: 'humor', topic: 'humor type', question: 'Welche Art von Humor?' },
+    { domain: 'health-sport', topic: 'knee', question: null },
+    { domain: 'health-sport', topic: 'back', question: null },
   ])
-  assert.equal(JSON.stringify(asked).includes('Knie'), false)
+  assert.doesNotMatch(JSON.stringify(asked), /Knie|Rücken/)
+})
+
+test('the asked list keeps the newest 1000 questions, so the bundle stays small', () => {
+  const dir = dataRepo()
+  const lines = Array.from({ length: 1200 }, (_, i) => JSON.stringify({ id: 'q' + i, domain: 'food', topic: 't' + i, question: `Frage ${i}?`, sees: ['familie'] }))
+  writeFileSync(join(dir, 'answers', '2026-11.jsonl'), lines.join('\n') + '\n')
+  const asked = buildBundles(loadData(dir))['my-agents'].interview.asked
+  assert.equal(asked.length, 1000)
+  assert.equal(asked.at(-1).question, 'Frage 1199?')
+})
+
+test('only an audience that sees every circle gets the asked questions', () => {
+  const dir = dataRepo()
+  writeFileSync(join(dir, 'audiences.yaml'), `owner: daniel
+devices:
+  ddStudio: age1aaa
+audiences:
+  my-agents: { members: [ddStudio], circle: any, interview: true }
+  friends: { members: [ddStudio], circle: freunde, interview: true }
+`)
+  writeFileSync(join(dir, 'answers', '2026-11.jsonl'), JSON.stringify({ id: 'a-9', domain: 'work', topic: 'boss', question: 'Wie ist dein Chef?', sees: ['arbeit'] }) + '\n')
+  const b = buildBundles(loadData(dir))
+  assert.equal(b['my-agents'].interview.asked.at(-1).question, 'Wie ist dein Chef?')
+  assert.deepEqual(b.friends.interview.asked, [])
+})
+
+test('a fact id used twice stops the build, with both places', () => {
+  const dir = dataRepo()
+  writeFileSync(join(dir, 'facts', 'communication.md'), `- Writes plain English. {id: f-1, sees: ${CIRCLES_WORK}, c: 0.5, t: 2026-10}\n`)
+  assert.throws(() => loadData(dir), /facts\/food\.md:1: id f-1 is used twice \(also facts\/communication\.md:1\)/)
 })

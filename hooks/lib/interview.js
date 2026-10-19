@@ -113,7 +113,9 @@ export function buildRequest(data, ctx, language) {
   const asked = [...(Array.isArray(iv.asked) ? iv.asked : []), ...own]
   const counts = answerCounts(iv, own.length ? own : ctx.recent, data.meta?.published ?? '')
   // A question only the owner may see the answer to is named by its topic, never its words.
-  const askedLine = (e) => (Array.isArray(e.sees) && !e.sees.length ? `- [${e.domain}/${e.topic}] (only the owner may see this)` : `- ${e.question}`)
+  // (The bundle's entries carry `question: null` for it; this device's own carry `sees: []`.)
+  const ownerOnly = (e) => !isText(e.question) || (Array.isArray(e.sees) && !e.sees.length)
+  const askedLine = (e) => (ownerOnly(e) ? `- [${e.domain}/${e.topic}] (only the owner may see this)` : `- ${e.question}`)
   const stops = [...new Set([...(iv.stops ?? []), ...ctx.recent.filter((e) => e.stop && e.topic).map((e) => e.topic)])]
   const old = oldFacts(data.domains, ctx.now)
   const said = (e) => (e.skipped ? '(skipped)' : isText(e.text) ? e.text : (e.options?.[e.answer] ?? '?'))
@@ -134,7 +136,7 @@ export function buildRequest(data, ctx, language) {
     ...(ctx.recent.length ? ctx.recent.slice(-30).map(recentLine) : ['- none']),
     '',
     'Asked before (never ask these again, not even in other words):',
-    ...(asked.length ? [...new Set(asked.filter((e) => isText(e.question) || (Array.isArray(e.sees) && !e.sees.length)).map(askedLine))].slice(-ASKED) : ['- none']),
+    ...(asked.length ? [...new Set(asked.filter((e) => isText(e.question) || (isText(e.domain) && isText(e.topic))).map(askedLine))].slice(-ASKED) : ['- none']),
     '',
     `Already queued: ${ctx.queued.join(', ') || 'nothing'}`,
     '',

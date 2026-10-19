@@ -7459,6 +7459,8 @@ function coverage(domains, counts) {
   return total ? reached / total : 0;
 }
 var stopTopics = (entries) => [...new Set(entries.filter((e) => e.stop && e.topic).map((e) => e.topic))].sort();
+var ASKED = 1e3;
+var askedQuestions = (entries) => entries.filter((e) => e.domain && e.topic).map((e) => ({ domain: e.domain, topic: e.topic, question: !Array.isArray(e.sees) || !e.sees.length ? null : e.question ?? null })).slice(-ASKED);
 
 // cli/src/bundle.mjs
 var filesIn = (dir, ext) => existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(ext)).sort() : [];
@@ -7480,6 +7482,11 @@ function loadData(dir) {
   const factFiles = filesIn(join(dir, "facts"), ".md");
   checkDomainNames(factFiles);
   const facts = factFiles.flatMap((f) => parseFacts(read(dir, "facts", f), f.slice(0, -3)));
+  const ids = /* @__PURE__ */ new Map();
+  for (const f of facts) {
+    if (ids.has(f.id)) throw new Error(`${f.where}: id ${f.id} is used twice (also ${ids.get(f.id)})`);
+    ids.set(f.id, f.where);
+  }
   const answers = filesIn(join(dir, "answers"), ".jsonl").flatMap((f) => parseAnswers(read(dir, "answers", f)));
   return { owner, devices, audiences, domains, facts, answers };
 }
@@ -7488,6 +7495,7 @@ var label = (v) => Array.isArray(v) ? `[${v.join(", ")}]` : v;
 var renderFact = (fact) => `- ${fact.text} {${LABELS.filter((k) => fact[k] !== void 0).map((k) => `${k}: ${label(fact[k])}`).join(", ")}}`;
 function buildBundles(data) {
   const interview = { domains: data.domains, counts: answerCounts(data.answers), stops: stopTopics(data.answers) };
+  const asked = askedQuestions(data.answers);
   const bundles = {};
   for (const name of Object.keys(data.audiences).sort()) {
     const chosen = select(data.facts, name, data.audiences);
@@ -7498,7 +7506,7 @@ function buildBundles(data) {
       audience: name,
       core: chosen.filter((f) => f.core).map((f) => renderFact(f) + "\n").join(""),
       domains,
-      interview: data.audiences[name].interview ? interview : null
+      interview: data.audiences[name].interview ? { ...interview, asked: data.audiences[name].circle === "any" ? asked : [] } : null
     };
   }
   return bundles;

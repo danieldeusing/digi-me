@@ -26,13 +26,11 @@ export function coverage(domains, counts) {
 
 export const stopTopics = (entries) => [...new Set(entries.filter((e) => e.stop && e.topic).map((e) => e.topic))].sort()
 
-// Every question asked, for the interview's "asked before": one only the owner may see goes by its topic alone.
+// Every question asked, newest kept, for the interview's "asked before". One whose answer only the
+// owner may see (no circles, or none at all) goes by its topic alone.
+const ASKED = 1000
 export const askedQuestions = (entries) =>
-  entries.filter((e) => e.domain && e.topic).map((e) => ({
-    domain: e.domain,
-    topic: e.topic,
-    question: Array.isArray(e.sees) && !e.sees.length ? null : e.question ?? null,
-    ts: e.ts ?? null,
-    skipped: e.skipped === true,
-    sees: Array.isArray(e.sees) ? e.sees : [],
-  }))
+  entries
+    .filter((e) => e.domain && e.topic)
+    .map((e) => ({ domain: e.domain, topic: e.topic, question: !Array.isArray(e.sees) || !e.sees.length ? null : e.question ?? null }))
+    .slice(-ASKED)

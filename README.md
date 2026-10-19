@@ -40,7 +40,13 @@ Then say "seed digi-me" once, to fill the first facts from your notes and memory
 time to time say "distill" to turn interview answers into facts (the `digi-me-distill`
 skill). Nothing is published until you have reviewed the changes and said yes. If you want it
 hands-off, schedule the same skill on your owner device: in its unattended mode it turns new answers
-into facts with the circles you chose, commits, pushes and publishes by itself.
+into facts with the circles you chose, commits, pushes and publishes by itself. For example, a
+scheduled task every four hours with this prompt:
+
+```text
+Memory loop: in <your data repo>, run the digi-me-distill skill in its unattended mode.
+Never ask. End with its one-line result or its Blocked line.
+```
 
 ## Settings
 

@@ -32,7 +32,8 @@ Domains and their default circles are in `domains.md`.
 
 ## Distill (weekly or on request)
 
-1. Run `digi-me inbox`. It appends new answers to `answers/<YYYY-MM>.jsonl`.
+1. Take the lock: `mkdir answers/.loop.lock`. If it exists, the memory loop runs: wait, or stop. Remove it
+   when you are done. Then run `digi-me inbox`. It appends new answers to `answers/<YYYY-MM>.jsonl`.
 2. Read the answers after the cursor in `answers/.distilled` (`<file>:<line>`; no file means from the start).
 3. Propose edits per answer:
    - a new fact, with `sees` from the answer entry and `c: 0.8` (1 for a free-text answer the user typed);
@@ -54,26 +55,43 @@ Domains and their default circles are in `domains.md`.
 
 ## Unattended (the scheduled memory loop)
 
-The owner allowed this run to change facts, commit, push and publish without asking. It runs
-"Distill" with these differences, and asks nothing:
+Run this mode only when the prompt says **unattended** or **memory loop**. The owner allowed it to
+change facts, commit, push and publish without asking. It never asks, and it never waits for an
+answer. It runs "Distill" with these differences:
 
-- Use the newest CLI: `ls -d ~/.claude/plugins/cache/digi-me/digi-me/*/ | sort -V | tail -1`, then
-  `cli/dist/digi-me.mjs` in it.
-- One run at a time: `mkdir answers/.loop.lock` first. If it exists and is younger than two hours,
-  stop. Remove it at the end, also after an error.
-- Start with `git pull --rebase`. End without a commit when `digi-me inbox` brings no new answer and
-  the cursor is at the end.
-- Apply every edit of step 3 at once: the circles the owner chose on the card go in as they are,
-  wider ones too. An entry without `sees` gets `[]`. Never set `core: true`. A contradiction gets
-  `⚠ conflicts with a-…`, never an overwrite.
-- One fact per subject: update the fact that already says the same thing; add a new one only for
-  something new.
-- A new fact: `id: f-` and four characters from `a-z0-9` that no fact in `facts/` has yet;
-  `t:` the current month; `a: [<answer id>]`.
-- `digi-me build` must pass. If it still fails after two fixes, undo the changes to `facts/`
-  (`git checkout -- facts`), leave the cursor where it was, and end with **Blocked** and the error.
-- Commit `facts/` and `answers/` by path, with the message
-  `Memory loop: <n> answers, <m> facts`. Push. Then run `digi-me publish`.
-- Never touch other files, and never run `git config`.
-- End with one line: answers read, facts added and changed, the commit, the bundle version; or a
-  **Blocked** line that names what failed.
+1. Use the newest CLI: `ls -d ~/.claude/plugins/cache/digi-me/digi-me/*/ | sort -V | tail -1`, then
+   `cli/dist/digi-me.mjs` in it. Run every git command with `GIT_TERMINAL_PROMPT=0`.
+2. Lock: `mkdir answers/.loop.lock`. If it exists and is younger than two hours, end with "skipped:
+   another run holds the lock" and leave it. If it is older, remove it and take it. Remove your own
+   lock at the end, also after an error.
+3. Clean start: `git status --porcelain -- facts answers` must show nothing but the lock. Otherwise
+   end with **Blocked**: "uncommitted changes in facts/ or answers/: the owner reviews them first".
+4. `git pull --rebase`. On a conflict: `git rebase --abort`, then **Blocked**.
+5. Catch up: if the branch is ahead of its upstream, `git push`.
+6. `digi-me inbox`. If it added answers, commit `answers/` by path at once
+   (`Memory loop: <n> answers in`) and push: the relay no longer holds them.
+7. Distill the answers after the cursor with the rules of step 3 above, and these:
+   - a new fact gets the circles of its answer; an entry without `sees` gets `[]`;
+   - the circles of an existing fact never widen. A wider answer keeps the fact's circles. A
+     narrower answer goes into a fact of its own, with its circles, never into a wider fact;
+   - one fact per subject: for the same subject, raise `c`, set `t` to the current month and add the
+     answer id to `a:`; add a new fact only for something new;
+   - a contradiction, or a `confirm` card answered "partly" or "no": lower the old fact's `c` to
+     0.3, mark it `⚠ conflicts with a-<answer id>`, and add the owner's words as a new fact. Never
+     rewrite a fact's text;
+   - learn mode: the entry's `meaning`; without one, its `text`;
+   - facts are in English, like the others;
+   - a new fact: `id: f-` and four characters from `a-z0-9` that no fact has yet; `t:` the current
+     month; `a: [<answer id>]`;
+   - never set `core: true`.
+8. `digi-me build` must pass. If it still fails after two fixes: `git checkout -- facts` and
+   `git clean -fd -- facts`, leave the cursor, end with **Blocked** and the error.
+9. Move the cursor. Commit `facts/` and `answers/.distilled` by path
+   (`Memory loop: <n> answers, <m> facts`). Push.
+10. Publish when HEAD differs from the commit in `.build/published` (none yet: publish): run
+    `digi-me publish`, then write HEAD to `.build/published`. If it fails, end with **Blocked**;
+    the next run publishes again.
+11. Nothing new, nothing to push, nothing to publish: end with "nothing new", without a commit.
+12. Never touch other files, and never run `git config`.
+13. End with one line: answers in, facts added and changed, the commits, the bundle version; or a
+    **Blocked** line that names what failed.

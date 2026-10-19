@@ -256,8 +256,8 @@ test('a question asked before whose answer only the owner may see is listed by i
 
 test('questions another Mac asked come with the bundle and are never asked again here', () => {
   const data = { ...DATA, interview: { ...DATA.interview, asked: [
-    { domain: 'food', topic: 'breakfast', question: 'Was frühstückst du?', ts: '2026-10-01T10:00:00Z', skipped: false, sees: ['familie'] },
-    { domain: 'health-sport', topic: 'knee', question: null, ts: '2026-10-01T11:00:00Z', skipped: false, sees: [] },
+    { domain: 'food', topic: 'breakfast', question: 'Was frühstückst du?' },
+    { domain: 'health-sport', topic: 'knee', question: null },
   ] } }
   const { prompt } = buildRequest(data, { ...CTX, asked: [] }, 'de')
   assert.ok(prompt.includes('- Was frühstückst du?'))
