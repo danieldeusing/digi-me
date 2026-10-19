@@ -38,7 +38,9 @@ Ask Claude to "set up digi-me". The `digi-me-setup` skill guides you:
 
 Then say "seed digi-me" once, to fill the first facts from your notes and memory files. From
 time to time say "distill" to turn interview answers into facts (the `digi-me-distill`
-skill). Nothing is published until you have reviewed the changes and said yes.
+skill). Nothing is published until you have reviewed the changes and said yes. If you want it
+hands-off, schedule the same skill on your owner device: in its unattended mode it turns new answers
+into facts with the circles you chose, commits, pushes and publishes by itself.
 
 ## Settings
 

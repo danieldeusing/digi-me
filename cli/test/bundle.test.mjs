@@ -66,3 +66,17 @@ test('is deterministic', () => {
   const dir = dataRepo()
   assert.equal(JSON.stringify(buildBundles(loadData(dir))), JSON.stringify(buildBundles(loadData(dir))))
 })
+
+test('the interview part lists every question asked, an owner-only one by its topic alone', () => {
+  const dir = dataRepo()
+  writeFileSync(join(dir, 'answers', '2026-11.jsonl'), [
+    { id: 'a-2', domain: 'humor', topic: 'humor type', question: 'Welche Art von Humor?', ts: '2026-11-01T10:00:00Z', skipped: false, sees: ['familie'] },
+    { id: 'a-3', domain: 'health-sport', topic: 'knee', question: 'Was ist mit deinem Knie?', ts: '2026-11-02T10:00:00Z', skipped: false, sees: [] },
+  ].map((e) => JSON.stringify(e)).join('\n') + '\n')
+  const asked = buildBundles(loadData(dir))['my-agents'].interview.asked
+  assert.deepEqual(asked.slice(-2), [
+    { domain: 'humor', topic: 'humor type', question: 'Welche Art von Humor?', ts: '2026-11-01T10:00:00Z', skipped: false, sees: ['familie'] },
+    { domain: 'health-sport', topic: 'knee', question: null, ts: '2026-11-02T10:00:00Z', skipped: false, sees: [] },
+  ])
+  assert.equal(JSON.stringify(asked).includes('Knie'), false)
+})

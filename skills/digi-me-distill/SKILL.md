@@ -1,6 +1,6 @@
 ---
 name: digi-me-distill
-description: Use in the user's digi-me data repo when the user says "seed digi-me", "distill", "update my digi-me" or "process my interview answers" — turns sources or interview answers into facts, with the user's approval, then publishes.
+description: Use in the user's digi-me data repo when the user says "seed digi-me", "distill", "update my digi-me" or "process my interview answers" — turns sources or interview answers into facts, with the user's approval, then publishes. Also the scheduled memory loop, which runs "Unattended" below without asking.
 ---
 
 # digi-me seed and distill
@@ -51,3 +51,29 @@ Domains and their default circles are in `domains.md`.
 7. Move the cursor: write the last distilled `<file>:<line>` to `answers/.distilled`.
 8. Commit only after the user's yes, by path. Push only after a second yes.
 9. Run `digi-me publish` only after the user's yes: it sends the new bundles to every device at its next session start.
+
+## Unattended (the scheduled memory loop)
+
+The owner allowed this run to change facts, commit, push and publish without asking. It runs
+"Distill" with these differences, and asks nothing:
+
+- Use the newest CLI: `ls -d ~/.claude/plugins/cache/digi-me/digi-me/*/ | sort -V | tail -1`, then
+  `cli/dist/digi-me.mjs` in it.
+- One run at a time: `mkdir answers/.loop.lock` first. If it exists and is younger than two hours,
+  stop. Remove it at the end, also after an error.
+- Start with `git pull --rebase`. End without a commit when `digi-me inbox` brings no new answer and
+  the cursor is at the end.
+- Apply every edit of step 3 at once: the circles the owner chose on the card go in as they are,
+  wider ones too. An entry without `sees` gets `[]`. Never set `core: true`. A contradiction gets
+  `⚠ conflicts with a-…`, never an overwrite.
+- One fact per subject: update the fact that already says the same thing; add a new one only for
+  something new.
+- A new fact: `id: f-` and four characters from `a-z0-9` that no fact in `facts/` has yet;
+  `t:` the current month; `a: [<answer id>]`.
+- `digi-me build` must pass. If it still fails after two fixes, undo the changes to `facts/`
+  (`git checkout -- facts`), leave the cursor where it was, and end with **Blocked** and the error.
+- Commit `facts/` and `answers/` by path, with the message
+  `Memory loop: <n> answers, <m> facts`. Push. Then run `digi-me publish`.
+- Never touch other files, and never run `git config`.
+- End with one line: answers read, facts added and changed, the commit, the bundle version; or a
+  **Blocked** line that names what failed.

@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { parseFacts } from './facts.mjs'
 import { NAME, parseAudiences } from './audiences.mjs'
 import { select } from './rules.mjs'
-import { parseDomains, parseAnswers, answerCounts, stopTopics } from './coverage.mjs'
+import { parseDomains, parseAnswers, answerCounts, stopTopics, askedQuestions } from './coverage.mjs'
 
 const filesIn = (dir, ext) => (existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(ext)).sort() : [])
 const read = (...parts) => readFileSync(join(...parts), 'utf8')
@@ -36,7 +36,7 @@ export const renderFact = (fact) =>
   `- ${fact.text} {${LABELS.filter((k) => fact[k] !== undefined).map((k) => `${k}: ${label(fact[k])}`).join(', ')}}`
 
 export function buildBundles(data) {
-  const interview = { domains: data.domains, counts: answerCounts(data.answers), stops: stopTopics(data.answers) }
+  const interview = { domains: data.domains, counts: answerCounts(data.answers), stops: stopTopics(data.answers), asked: askedQuestions(data.answers) }
   const bundles = {}
   for (const name of Object.keys(data.audiences).sort()) {
     const chosen = select(data.facts, name, data.audiences)

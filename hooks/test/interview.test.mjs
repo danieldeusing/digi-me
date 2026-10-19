@@ -253,3 +253,15 @@ test('a question asked before whose answer only the owner may see is listed by i
   assert.ok(prompt.includes('- [health-sport/knee] (only the owner may see this)'))
   assert.ok(!prompt.includes('Knie'))
 })
+
+test('questions another Mac asked come with the bundle and are never asked again here', () => {
+  const data = { ...DATA, interview: { ...DATA.interview, asked: [
+    { domain: 'food', topic: 'breakfast', question: 'Was frühstückst du?', ts: '2026-10-01T10:00:00Z', skipped: false, sees: ['familie'] },
+    { domain: 'health-sport', topic: 'knee', question: null, ts: '2026-10-01T11:00:00Z', skipped: false, sees: [] },
+  ] } }
+  const { prompt } = buildRequest(data, { ...CTX, asked: [] }, 'de')
+  assert.ok(prompt.includes('- Was frühstückst du?'))
+  assert.ok(prompt.includes('- [health-sport/knee] (only the owner may see this)'))
+  // the bundle's questions are counted in the bundle already: food is its 4, plus the recent answer after it
+  assert.ok(prompt.includes('- food | what you eat | 20 | familie beste-freunde freunde arbeitsfreunde | 5'))
+})

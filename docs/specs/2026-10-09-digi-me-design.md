@@ -14,6 +14,9 @@ Revision 9 (2026-10-14, Daniel: interview in every session): the interview runs 
 and always uses the `my-agents` facts; the core facts in the system prompt still follow the
 session's audience (§16).
 
+Revision 11 (2026-10-19, Daniel: a fully automatic memory loop): distill may run unattended on the
+owner device (§9.3), and the bundle carries the questions asked so far (`interview.asked`).
+
 Revision 10 (2026-10-14, Daniel: questions are unlimited): no daily limit. The option `perDay`,
 `describe().perDay` and the text `doneToday` are gone; a host asks for new cards whenever its
 queue runs low.
@@ -399,6 +402,20 @@ corrects them through `confirm` cards.
 4. Show the diff per file. The owner approves or changes it.
 5. Move the cursor. Commit after the owner's yes. Push after a second yes.
 6. Run `digi-me publish`. Every device gets the new bundles at its next session start.
+
+### 9.3 Memory loop (unattended)
+
+The owner may let distill run by itself on the owner device, for example as a scheduled task
+every four hours. It runs §9.2 without the approval steps: every edit goes in as the answer says,
+with the circles the owner chose on the card; an answer without circles stays owner-only; a
+contradiction is marked, never overwritten; `core: true` is never set. `digi-me build` must pass,
+then the loop commits, pushes and publishes. A run without new answers changes nothing. The
+`digi-me-distill` skill names the exact rules ("Unattended").
+
+The bundle's interview part also lists every question asked (`interview.asked`: domain, topic,
+question, time, skipped, circles; a question whose answer only the owner may see goes by its topic
+alone). The host passes its own list as `ctx.asked`; a request lists both as "asked before", so no
+device asks a question another device asked.
 
 ## 10. Distribution for Daniel (phase 1)
 

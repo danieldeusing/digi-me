@@ -106,9 +106,12 @@ export function oldFacts(domains, now) {
 export function buildRequest(data, ctx, language) {
   if (!data?.interview) throw new Error('no digi-me data yet: run `digi-me pull`, or the digi-me-setup skill')
   const iv = data.interview
-  // Every question this device asked (ctx.asked); the counts fall back to the recent answers.
-  const asked = Array.isArray(ctx.asked) ? ctx.asked : []
-  const counts = answerCounts(iv, asked.length ? asked : ctx.recent, data.meta?.published ?? '')
+  // Every question asked: on any device until the bundle was published (iv.asked), and on this one
+  // (ctx.asked). The counts take the bundle's, plus this device's answers after it; without a list of
+  // its own, the recent answers.
+  const own = Array.isArray(ctx.asked) ? ctx.asked : []
+  const asked = [...(Array.isArray(iv.asked) ? iv.asked : []), ...own]
+  const counts = answerCounts(iv, own.length ? own : ctx.recent, data.meta?.published ?? '')
   // A question only the owner may see the answer to is named by its topic, never its words.
   const askedLine = (e) => (Array.isArray(e.sees) && !e.sees.length ? `- [${e.domain}/${e.topic}] (only the owner may see this)` : `- ${e.question}`)
   const stops = [...new Set([...(iv.stops ?? []), ...ctx.recent.filter((e) => e.stop && e.topic).map((e) => e.topic)])]
@@ -131,7 +134,7 @@ export function buildRequest(data, ctx, language) {
     ...(ctx.recent.length ? ctx.recent.slice(-30).map(recentLine) : ['- none']),
     '',
     'Asked before (never ask these again, not even in other words):',
-    ...(asked.length ? [...new Set(asked.filter((e) => isText(e.question)).map(askedLine))].slice(-ASKED) : ['- none']),
+    ...(asked.length ? [...new Set(asked.filter((e) => isText(e.question) || (Array.isArray(e.sees) && !e.sees.length)).map(askedLine))].slice(-ASKED) : ['- none']),
     '',
     `Already queued: ${ctx.queued.join(', ') || 'nothing'}`,
     '',
