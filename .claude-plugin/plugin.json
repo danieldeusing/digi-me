@@ -1,6 +1,6 @@
 {
   "name": "digi-me",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Your digital me: your core facts in every Claude Code session, and an interview deck for a host mod",
   "author": {
     "name": "Daniel Deusing"
