@@ -29,6 +29,8 @@ const REQUEST = { model: 'claude-opus-5-5', effort: 'medium', maxTokens: 8000, t
 const FEEDBACK = { model: 'claude-opus-5-5', effort: 'low', maxTokens: 1500, timeoutMs: 60_000 }
 const LANGUAGES = { de: 'German', en: 'English' }
 const SIX_MONTHS = 183 * 86_400_000
+// The questions asked before that a request lists, newest kept.
+const ASKED = 400
 const TEXTS = {
   de: {
     wait: 'Suche Fragen über dich … ☕', empty: 'Gerade keine Fragen. Gleich kommen neue.', fail: 'Etwas ist schiefgegangen',
@@ -80,7 +82,7 @@ export function systemPrompt(ctx, language) {
     '2. At most two confirm cards for facts under "Facts to re-check".',
     '3. New questions for the domains furthest below their target (answers so far against target). In a domain with fewer than 5 answers use either, choice or scale; free only after that.',
     '',
-    'Never ask about a topic under "Do not ask", and never repeat a topic from the recent answers or the queue. Ask about the owner only: about people in their life, ask only what the owner feels or prefers, never for those people\'s private details. Questions are warm, short and answerable in seconds.',
+    'Never ask about a topic under "Do not ask", never repeat a topic from the recent answers or the queue, and never repeat a question from "Asked before", not even in other words. Ask about the owner only: about people in their life, ask only what the owner feels or prefers, never for those people\'s private details. Questions are warm, short and answerable in seconds.',
     '',
     `Language: ${languageRule}`,
   ].join('\n')
@@ -104,7 +106,11 @@ export function oldFacts(domains, now) {
 export function buildRequest(data, ctx, language) {
   if (!data?.interview) throw new Error('no digi-me data yet: run `digi-me pull`, or the digi-me-setup skill')
   const iv = data.interview
-  const counts = answerCounts(iv, ctx.recent, data.meta?.published ?? '')
+  // Every question this device asked (ctx.asked); the counts fall back to the recent answers.
+  const asked = Array.isArray(ctx.asked) ? ctx.asked : []
+  const counts = answerCounts(iv, asked.length ? asked : ctx.recent, data.meta?.published ?? '')
+  // A question only the owner may see the answer to is named by its topic, never its words.
+  const askedLine = (e) => (Array.isArray(e.sees) && !e.sees.length ? `- [${e.domain}/${e.topic}] (only the owner may see this)` : `- ${e.question}`)
   const stops = [...new Set([...(iv.stops ?? []), ...ctx.recent.filter((e) => e.stop && e.topic).map((e) => e.topic)])]
   const old = oldFacts(data.domains, ctx.now)
   const said = (e) => (e.skipped ? '(skipped)' : isText(e.text) ? e.text : (e.options?.[e.answer] ?? '?'))
@@ -123,6 +129,9 @@ export function buildRequest(data, ctx, language) {
     '',
     'Recent answers (newest last):',
     ...(ctx.recent.length ? ctx.recent.slice(-30).map(recentLine) : ['- none']),
+    '',
+    'Asked before (never ask these again, not even in other words):',
+    ...(asked.length ? [...new Set(asked.filter((e) => isText(e.question)).map(askedLine))].slice(-ASKED) : ['- none']),
     '',
     `Already queued: ${ctx.queued.join(', ') || 'nothing'}`,
     '',

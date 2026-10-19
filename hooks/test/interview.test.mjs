@@ -231,3 +231,25 @@ test('describe names the words for the card header', async () => {
   assert.deepEqual([de.texts.domain, de.texts.topic, en.texts.domain, en.texts.topic], ['Bereich', 'Thema', 'area', 'topic'])
   assert.deepEqual([de.texts.own, en.texts.own], ['Eigene Antwort', 'Own answer'])
 })
+
+test('every question asked before is listed as never to ask again, and counts toward coverage', () => {
+  const asked = [
+    { domain: 'humor', topic: 'humor type', question: 'Welche Art von Humor bringt dich zum Lachen?', ts: '2026-10-09T13:00:00Z', skipped: false },
+    { domain: 'food', topic: 'breakfast', question: 'Was frühstückst du?', ts: '2026-10-09T14:00:00Z', skipped: false },
+    { domain: 'food', topic: 'snack', question: 'Süß oder salzig?', ts: '2026-10-09T15:00:00Z', skipped: true },
+    ...CTX.recent,
+  ]
+  const req = buildRequest(DATA, { ...CTX, asked }, 'de')
+  assert.ok(req.prompt.includes('Asked before (never ask these again, not even in other words):'))
+  for (const q of ['- Welche Art von Humor bringt dich zum Lachen?', '- Was frühstückst du?', '- Süß oder salzig?']) assert.ok(req.prompt.includes(q), q)
+  // food: 4 from the bundle, plus the two answered after it was published (the skipped one does not count)
+  assert.ok(req.prompt.includes('- food | what you eat | 20 | familie beste-freunde freunde arbeitsfreunde | 6'))
+  assert.match(req.system, /never repeat a question from "Asked before"/)
+})
+
+test('a question asked before whose answer only the owner may see is listed by its topic, not its words', () => {
+  const asked = [{ domain: 'health-sport', topic: 'knee', question: 'Was ist mit deinem Knie?', ts: '2026-10-09T13:00:00Z', skipped: false, sees: [] }]
+  const { prompt } = buildRequest(DATA, { ...CTX, recent: [], asked }, 'de')
+  assert.ok(prompt.includes('- [health-sport/knee] (only the owner may see this)'))
+  assert.ok(!prompt.includes('Knie'))
+})
